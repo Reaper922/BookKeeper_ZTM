@@ -8,12 +8,41 @@ const bookmarksContainer = document.getElementById('bookmarks-container');
 
 
 function showModal() {
-    console.log(websiteNameEl);
     modal.classList.add('show-modal');
     websiteNameEl.focus();
+}
+
+function validate(nameValue, urlValue) {
+    const expression = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g
+    const regex = new RegExp(expression);
+
+    if(!nameValue || !urlValue) {
+        alert('Please submit values for both fields.');
+        return false;
+    }
+    if(!urlValue.match(regex)) {
+        alert('No valid URL');
+        return false;
+    }
+    return true;
+}
+
+function storeBookmark(event) {
+    event.preventDefault();
+    const nameValue = websiteNameEl.value;
+    let urlValue = websiteUrlEl.value;
+    if(!urlValue.includes('http://') && !urlValue.includes('https://')) {
+        urlValue = `https://${urlValue}`;
+    }
+
+    if(!validate(nameValue, urlValue)) {
+        return false;
+    }
 }
 
 
 modalShow.addEventListener('click', showModal);
 modalClose.addEventListener('click', () => modal.classList.remove('show-modal'));
 window.addEventListener('click', (event) => (event.target === modal ? modal.classList.remove('show-modal') : false));
+
+bookmarkForm.addEventListener('submit', storeBookmark);

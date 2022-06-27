@@ -6,7 +6,7 @@ const websiteNameEl = document.getElementById('website-name');
 const websiteUrlEl = document.getElementById('website-url');
 const bookmarksContainer = document.getElementById('bookmarks-container');
 
-let bookmarks = [];
+let bookmarks = {};
 
 
 function showModal() {
@@ -14,7 +14,7 @@ function showModal() {
     websiteNameEl.focus();
 }
 
-function validate(nameValue, urlValue) {
+function validateModal(nameValue, urlValue) {
     const expression = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g
     const regex = new RegExp(expression);
 
@@ -30,24 +30,28 @@ function validate(nameValue, urlValue) {
 }
 
 function buildBookmarks() {
-    bookmarks.forEach((bookmark) => {
-        bookmarksContainer.textContent = '';
-        const { name, url } = bookmark;
+    bookmarksContainer.textContent = '';
+    Object.keys(bookmarks).forEach((id) => {
+        const { name, url } = bookmarks[id];
         const item = document.createElement('div');
-        item.classList.add('item');
         const closeIcon = document.createElement('i');
-        closeIcon.classList.add('fas', 'fa-times');
-        closeIcon.setAttribute('title', 'Delete Bookmark');
-        closeIcon.setAttribute('onclick', `deleteBookmark('${url}')`)
         const linkInfo = document.createElement('div');
-        linkInfo.classList.add('name');
         const favicon = document.createElement('img');
+        const link = document.createElement('a');
+
+        item.classList.add('item');
+        closeIcon.classList.add('fas', 'fa-times');
+        linkInfo.classList.add('name');
+
+        closeIcon.setAttribute('title', 'Delete Bookmark');
+        closeIcon.setAttribute('onclick', `deleteBookmark('${id}')`)
         favicon.setAttribute('src', `https://s2.googleusercontent.com/s2/favicons?domain=${url}`);
         favicon.setAttribute('alt', 'favicon');
-        const link = document.createElement('a');
         link.setAttribute('href', `${url}`);
         link.setAttribute('target', '_blank');
+
         link.textContent = name;
+
         linkInfo.append(favicon, link);
         item.append(closeIcon, linkInfo);
         bookmarksContainer.appendChild(item);
@@ -55,26 +59,24 @@ function buildBookmarks() {
 }
 
 function fetchBookmarks() {
-    if(localStorage.getItem('bookmarks')) {
-        bookmarks = JSON.parse(localStorage.getItem('bookmarks'));
+    const localBookmarks = localStorage.getItem('bookmarks');
+    if(localBookmarks) {
+        bookmarks = JSON.parse(localBookmarks);
     } else {
-        bookmarks = [
-            {
-                name: 'test',
-                url: 'https://google.de',
-            },
-        ];
+        const id = 'https://google.de'
+        bookmarks[id] = {
+                    name: 'Google',
+                    url: 'https://google.de',
+            };
         localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
     }
     buildBookmarks();
 }
 
-function deleteBookmark(url) {
-    bookmarks.forEach((bookmark, index) => {
-        if(bookmark.url === url) {
-            bookmarks.splice(index, 1);
-        }
-    });
+function deleteBookmark(id) {
+    if(bookmarks[id]) {
+        delete bookmarks[id];
+    }
     localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
     fetchBookmarks();
 }
@@ -87,7 +89,7 @@ function storeBookmark(event) {
         urlValue = `https://${urlValue}`;
     }
 
-    if(!validate(nameValue, urlValue)) {
+    if(!validateModal(nameValue, urlValue)) {
         return false;
     }
 
@@ -96,8 +98,7 @@ function storeBookmark(event) {
         url: urlValue,
     };
 
-    bookmarks.push(bookmark);
-    console.log(bookmarks);
+    bookmarks[urlValue] = bookmark;
     localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
     fetchBookmarks();
     bookmarkForm.reset();
